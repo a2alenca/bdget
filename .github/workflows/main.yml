@@ -20,18 +20,20 @@ jobs:
       # Paso 1.5: carga secretos en el application.properties
       - name: Update db url
         run: |
-         db_url_escaped=$(printf '%s\n' "${{ secrets.DB_URL }}" | sed 's/[&/\]/\\&/g')
-         sed -i "s|<db_url>|$db_url_escaped|" src/main/resources/application.properties
+          db_url_escaped=$(printf '%s\n' "${{ secrets.DB_URL }}" | sed 's/[&/\]/\\&/g')
+          sed -i "s|<db_url>|$db_url_escaped|" src/main/resources/application.properties
         shell: bash
+        
       - name: Update db username 
         run: |
-         db_username_escaped=$(printf '%s\n' "${{ secrets.DB_USERNAME }}" | sed 's/[&/\]/\\&/g')
-         sed -i "s|<db_username>|$db_username_escaped|" src/main/resources/application.properties
+          db_username_escaped=$(printf '%s\n' "${{ secrets.DB_USERNAME }}" | sed 's/[&/\]/\\&/g')
+          sed -i "s|<db_username>|$db_username_escaped|" src/main/resources/application.properties
         shell: bash
+        
       - name: Update db password 
         run: |
-         db_password_escaped=$(printf '%s\n' "${{ secrets.DB_PASSWORD }}" | sed 's/[&/\]/\\&/g')
-         sed -i "s|<db_password>|$db_password_escaped|" src/main/resources/application.properties
+          db_password_escaped=$(printf '%s\n' "${{ secrets.DB_PASSWORD }}" | sed 's/[&/\]/\\&/g')
+          sed -i "s|<db_password>|$db_password_escaped|" src/main/resources/application.properties
         shell: bash
 
       # Paso 2: Autenticar en DockerHub 
@@ -51,22 +53,21 @@ jobs:
         run: |
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
           
-     # Paso 5: Configurar credenciales de AWS para SSH, incluyendo AWS_SESSION_TOKEN
+      # Paso 5: Configurar credenciales de AWS para SSH
       - name: Set up AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1  # Cambia a tu región
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  # Añadido aquí
+          aws-region: us-east-1  
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}  
 
-      # Paso 5.5:  
+      # Paso 5.5: Agregar llave SSH
       - name: Add SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
 
       # Paso 6: Conectarse a EC2 y desplegar el contenedor
       - name: SSH commands to deploy
@@ -74,11 +75,13 @@ jobs:
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${{ secrets.USER_SERVER }}@${{ secrets.EC2_HOST }} << 'EOF'
             # Autenticar en DockerHub desde EC2
             echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+            
             # Descargar la última versión de la imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
-            # Parar y eliminar cualquier contenedor previo
+            
+            # Parar y eliminar cualquier contenedor previo si existe
             docker stop my-app || true && docker rm my-app || true
-            # Iniciar el contenedor
-            docker run -d --name my-app -v /mnt/efs:/app/efs -p 8080:8080 $ {{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
+            
+            # Iniciar el contenedor mapeando el puerto y el EFS
+            docker run -d --name my-app -v /mnt/efs:/app/efs -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/my-app:latest
           EOF
-  
