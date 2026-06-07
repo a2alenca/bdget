@@ -10,7 +10,8 @@ COPY Wallet_N72BZHZWYZGTE7OH /app/wallet
 
 ENV TNS_ADMIN=/app/wallet
 
-RUN mvn clean package
+# MODIFICADO: Agregado -DskipTests para que no intente conectar a la base de datos en GitHub
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:22-jdk 
 
@@ -22,6 +23,3 @@ ENV TNS_ADMIN=/app/wallet
 EXPOSE 8080
 
 ENTRYPOINT [ "java", "-jar","/app/bdget.jar" ]
-
-
-
