@@ -11,7 +11,7 @@ COPY Wallet_N72BZHZWYZGTE7OH /app/wallet
 ENV TNS_ADMIN=/app/wallet
 
 # MODIFICADO: Agregado -DskipTests para que no intente conectar a la base de datos en GitHub
-RUN mvn clean package -DskipTests
+#RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:22-jdk 
 
