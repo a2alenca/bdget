@@ -1,5 +1,5 @@
-FROM eclipse-temurin:22-jdk AS buildstage 
- 
+FROM eclipse-temurin:22-jdk AS buildstage
+
 RUN apt-get update && apt-get install -y maven
 
 WORKDIR /app
@@ -10,10 +10,10 @@ COPY Wallet_N72BZHZWYZGTE7OH /app/wallet
 
 ENV TNS_ADMIN=/app/wallet
 
-# MODIFICADO: Agregado -DskipTests para que no intente conectar a la base de datos en GitHub
-#RUN mvn clean package -DskipTests
+# ACTIVADO: Ahora Docker sí va a compilar el proyecto antes de avanzar
+RUN mvn clean package -DskipTests
 
-FROM eclipse-temurin:22-jdk 
+FROM eclipse-temurin:22-jdk
 
 COPY --from=buildstage /app/target/bdget-0.0.1-SNAPSHOT.jar /app/bdget.jar
 
